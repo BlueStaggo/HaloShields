@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "+xQHRkW/FVqnCCh8s/vBynTWjkDCO/pKZcPnme7BlZt14Pk3I2lEE4TV8TagL7NRqJw04qVNJewbLKQxymp1PQ==",
+  "success": true,
+  "projectFilePath": "c:\\Users\\oweng\\OneDrive\\Documents\\My Games\\Terraria\\tModLoader\\ModSources\\HaloShields\\HaloShields.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\oweng\\.nuget\\packages\\tmodloader.codeassist\\0.1.5\\tmodloader.codeassist.0.1.5.nupkg.sha512"
+  ],
+  "logs": []
+}

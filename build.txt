@@ -1,0 +1,3 @@
+displayName = Halo Shields
+author = BlueStag
+version = 0.1
