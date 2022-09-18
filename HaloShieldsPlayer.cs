@@ -4,6 +4,7 @@ using ReLogic.Utilities;
 using Terraria.Audio;
 using Terraria.DataStructures;
 using Terraria.GameContent.Achievements;
+using Terraria.GameContent.Creative;
 using Terraria.ID;
 using Terraria.ModLoader.IO;
 
@@ -11,6 +12,22 @@ namespace HaloShields;
 
 public class HaloShieldsPlayer : ModPlayer
 {
+    private static double Difficulty
+    {
+        get
+        {
+            if (Main.GameModeInfo.IsJourneyMode)
+            {
+                var power = CreativePowerManager.Instance.GetPower<CreativePowers.DifficultySliderPower>();
+                if (power is not null && power.GetIsUnlocked())
+                {
+                    return power.StrengthMultiplierToGiveNPCs;
+                }
+            }
+            return Main.GameMode;
+        }
+    }
+
     internal SlotId? sfxShieldRecharging = null;
     internal SlotId? sfxShieldEmpty = null;
     internal SlotId? sfxShieldLow = null;
@@ -40,18 +57,19 @@ public class HaloShieldsPlayer : ModPlayer
         On.Terraria.Player.ItemCheck_UseLifeCrystal += OnItemCheck_UseLifeCrystal;
         On.Terraria.Player.ItemCheck_UseLifeFruit += OnItemCheck_UseLifeFruit;
         IL.Terraria.Player.Hurt += ILHurt;
+        IL.Terraria.Player.PickupItem += ILPickupItem;
     }
 
     private int DamageShield(int amount)
     {
-        shieldRegenCooldown = 180 - ShieldRegenSpeed;
+        shieldRegenCooldown = 180 - ShieldRegenSpeed + (int)Math.Round(Math.Max(Difficulty - 1, 0) * 30);
         if (ShieldAmount == 0)
         {
             return amount;
         }
         else
         {
-            ShieldAmount -= amount * (Main.GameModeInfo.EnemyMaxLifeMultiplier / 2 + 1.5);
+            ShieldAmount -= amount / Difficulty * 2;
             if (ShieldAmount < 0)
                 ShieldAmount = 0;
             return 0;
@@ -117,7 +135,7 @@ public class HaloShieldsPlayer : ModPlayer
     {
         if (ShieldAmount > 0)
         {
-            ShieldRegen = (Player.lifeRegen + Player.statDefense) / 8;
+            ShieldRegen = (Player.lifeRegen / 8 + Player.statDefense / 12) * (1.2 - Difficulty * 0.2);
             ShieldRegenSpeed = Math.Max(Player.lifeRegen * 10 - 10, 0);
         }
         Player.lifeRegen = 0;
@@ -134,9 +152,8 @@ public class HaloShieldsPlayer : ModPlayer
         shieldDebuffCooldown -= 1;
         if (ShieldRegen < 0 && shieldDebuffCooldown <= 0)
         {
-            shieldRegenCooldown = 180;
             shieldDebuffCooldown = 120 / -(int)ShieldRegen;
-            ShieldAmount -= 1;
+            ShieldAmount -= 4;
         }
         else
         {
@@ -155,7 +172,7 @@ public class HaloShieldsPlayer : ModPlayer
         if (HaloShields.ClientConfig.SoundEffects)
         {
             if (ShieldAmount > 0
-                && (ShieldAmount / ShieldMax2) < 0.25
+                && (ShieldAmount / ShieldMax2) < 0.35
                 && sfxShieldRecharging is null)
             {
                 sfxShieldLow ??= SoundEngine.PlaySound(HaloShieldsSounds.Low);
@@ -233,7 +250,6 @@ public class HaloShieldsPlayer : ModPlayer
         bool num2ge1 = false;
         bool num2lt1 = false;
 
-        Console.WriteLine("Injecting into Player.Hurt...");
         var c = new ILCursor(il);
         while (c.TryGotoNext(i => i.MatchLdcR8(1.0))) // ldc.r8 1
         {
@@ -261,5 +277,15 @@ public class HaloShieldsPlayer : ModPlayer
         }
 
         throw new Exception("Failed to inject IL into method Terraria.Player.Hurt");
+    }
+
+    private static void ILPickupItem(ILContext il)
+    {
+        var c = new ILCursor(il);
+        if (!c.TryGotoNext(i => i.MatchLdcI4(20) && i.Next.MatchCall<Player>("Heal")))
+            throw new Exception("Failed to inject IL into method Terraria.Player.PickupItem");
+
+        c.Remove();
+        c.Emit(OpCodes.Ldc_I4, 5);
     }
 }
