@@ -1,7 +1,7 @@
-<center>
+<p align="center">
     <img src="icon.png" alt="Mod Icon" width="20%">
-    <h1>Halo Shields</h1>
-</center>
+</p>
+<h1 align="center">Halo Shields</h1>
 
 This is a mod that reworks the Terraria health system and introduces shields from Halo. Listen to the glorious vroom vroom vroooooom of that shield recharging!
 Note: This mod may not be properly balanced. Try playing up to the end of the game if you want to test it out.

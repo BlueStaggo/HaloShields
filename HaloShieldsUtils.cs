@@ -1,3 +1,5 @@
+using MonoMod.Cil;
+
 namespace HaloShields;
 
 public static class Utils

@@ -7,3 +7,5 @@ Mechanics:
 - Damage dealt from shields is not reduced by defense or higher difficulties
 - More defense increases the speed of shield recharging
 - Healing items are much less efficient
+
+Github: https://github.com/BlueStaggo/HaloShields

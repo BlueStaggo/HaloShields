@@ -52,14 +52,6 @@ public class HaloShieldsPlayer : ModPlayer
         ShieldRegenSpeed = 0;
     }
 
-    public override void Load()
-    {
-        On.Terraria.Player.ItemCheck_UseLifeCrystal += OnItemCheck_UseLifeCrystal;
-        On.Terraria.Player.ItemCheck_UseLifeFruit += OnItemCheck_UseLifeFruit;
-        IL.Terraria.Player.Hurt += ILHurt;
-        IL.Terraria.Player.PickupItem += ILPickupItem;
-    }
-
     private int DamageShield(int amount)
     {
         shieldRegenCooldown = 180 - ShieldRegenSpeed + (int)Math.Round(Math.Max(Difficulty - 1, 0) * 30);
@@ -206,86 +198,5 @@ public class HaloShieldsPlayer : ModPlayer
         }
 
         ShieldAmount = Math.Clamp(ShieldAmount, 0, ShieldMax2);
-    }
-
-    private static void OnItemCheck_UseLifeCrystal(On.Terraria.Player.orig_ItemCheck_UseLifeCrystal orig,
-                                                   Player self, Item item)
-    {
-        var modPlayer = self.GetModPlayer<HaloShieldsPlayer>();
-        if (item.type == ItemID.LifeCrystal
-            && self.itemAnimation > 0
-            && modPlayer.ShieldMax < 400
-            && self.ItemTimeIsZero)
-        {
-            self.ApplyItemTime(item);
-            modPlayer.ShieldMax += 20;
-            modPlayer.ShieldMax2 += 20;
-            modPlayer.ShieldAmount += 20;
-            self.HealEffect(20);
-            AchievementsHelper.HandleSpecialEvent(self, 0);
-        }
-    }
-
-    private static void OnItemCheck_UseLifeFruit(On.Terraria.Player.orig_ItemCheck_UseLifeFruit orig,
-                                                 Player self, Item item)
-    {
-        var modPlayer = self.GetModPlayer<HaloShieldsPlayer>();
-        if (item.type == ItemID.LifeFruit
-            && self.itemAnimation > 0
-            && modPlayer.ShieldMax >= 400
-            && modPlayer.ShieldMax < 500
-            && self.ItemTimeIsZero)
-        {
-            self.ApplyItemTime(item);
-            modPlayer.ShieldMax += 5;
-            modPlayer.ShieldMax2 += 5;
-            modPlayer.ShieldAmount += 5;
-            self.HealEffect(5);
-            AchievementsHelper.HandleSpecialEvent(self, 0);
-        }
-    }
-
-    private static void ILHurt(ILContext il)
-    {
-        bool num2ge1 = false;
-        bool num2lt1 = false;
-
-        var c = new ILCursor(il);
-        while (c.TryGotoNext(i => i.MatchLdcR8(1.0))) // ldc.r8 1
-        {
-            if (c.Previous is null
-                || c.Next?.Next is null
-                || !(c.Previous?.Match(OpCodes.Ldloc_S) ?? false))
-                continue;
-
-            if (!num2ge1 && c.Next.Next.Match(OpCodes.Blt_Un))
-            {
-                c.Remove();
-                c.Emit(OpCodes.Ldc_R8, 0.0);
-                num2ge1 = true;
-            }
-
-            if (!num2lt1 && c.Next.Next.Match(OpCodes.Bge_Un_S))
-            {
-                c.Remove();
-                c.Emit(OpCodes.Ldc_R8, 0.0);
-                num2lt1 = true;
-            }
-
-            if (num2ge1 && num2lt1)
-                return;
-        }
-
-        throw new Exception("Failed to inject IL into method Terraria.Player.Hurt");
-    }
-
-    private static void ILPickupItem(ILContext il)
-    {
-        var c = new ILCursor(il);
-        if (!c.TryGotoNext(i => i.MatchLdcI4(20) && i.Next.MatchCall<Player>("Heal")))
-            throw new Exception("Failed to inject IL into method Terraria.Player.PickupItem");
-
-        c.Remove();
-        c.Emit(OpCodes.Ldc_I4, 5);
     }
 }
